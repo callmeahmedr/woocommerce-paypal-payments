@@ -32,6 +32,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class SavePaymentMethodsModule
@@ -125,6 +126,9 @@ class SavePaymentMethodsModule implements ModuleInterface {
 							$endpoint = $c->get( 'api.endpoint.payment-tokens' );
 							assert( $endpoint instanceof PaymentTokensEndpoint );
 
+							$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
+							assert( $subscriptions_helper instanceof SubscriptionHelper );
+
 							$target_customer_id = get_user_meta( get_current_user_id(), 'ppcp_customer_id', true );
 
 							$customer_tokens = 0;
@@ -142,7 +146,10 @@ class SavePaymentMethodsModule implements ModuleInterface {
 									! $target_customer_id
 									|| $customer_tokens === 0
 								)
-								&& is_user_logged_in()
+								&& (
+									is_user_logged_in()
+									|| $subscriptions_helper->cart_contains_subscription()
+								)
 							) {
 								$target_customer_id = bin2hex( random_bytes( 5 ) );
 							}
