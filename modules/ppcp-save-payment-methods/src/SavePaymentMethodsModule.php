@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
 
-use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
@@ -32,7 +31,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class SavePaymentMethodsModule
@@ -103,7 +101,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		// Adds attributes needed to save payment method.
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function( array $data, string $payment_method, array $request_data ) use ( $settings, $c ): array {
+			function( array $data, string $payment_method, array $request_data ) use ( $settings ): array {
 				if ( $payment_method === CreditCardGateway::ID ) {
 					if ( ! $settings->has( 'vault_enabled_dcc' ) || ! $settings->get( 'vault_enabled_dcc' ) ) {
 						return $data;
@@ -123,36 +121,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 						$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
 						if ( ! $target_customer_id ) {
-							$endpoint = $c->get( 'api.endpoint.payment-tokens' );
-							assert( $endpoint instanceof PaymentTokensEndpoint );
-
-							$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
-							assert( $subscriptions_helper instanceof SubscriptionHelper );
-
 							$target_customer_id = get_user_meta( get_current_user_id(), 'ppcp_customer_id', true );
-
-							$customer_tokens = 0;
-							if ( $target_customer_id ) {
-								try {
-									$customer_tokens = count( $endpoint->payment_tokens_for_customer( $target_customer_id ) );
-								} catch ( Exception $exception ) {
-									$customer_tokens = 0;
-								}
-							}
-
-							// Temporary fix to ensure a value is sent when creating Data User ID token on PayPal.
-							if (
-								(
-									! $target_customer_id
-									|| $customer_tokens === 0
-								)
-								&& (
-									is_user_logged_in()
-									|| $subscriptions_helper->cart_contains_subscription()
-								)
-							) {
-								$target_customer_id = bin2hex( random_bytes( 5 ) );
-							}
 						}
 
 						if ( $target_customer_id ) {
