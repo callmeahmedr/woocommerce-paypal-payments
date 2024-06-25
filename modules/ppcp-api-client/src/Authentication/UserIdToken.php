@@ -72,6 +72,12 @@ class UserIdToken {
 		$bearer = $this->bearer->bearer();
 
 		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=id_token';
+
+		// Temporary fix to ensure a value is sent for logged in customers without target customer id stored.
+		if ( ! $target_customer_id && is_user_logged_in() ) {
+			$target_customer_id = 'ppcp_no_tokens_target_customer_id';
+		}
+
 		if ( $target_customer_id ) {
 			$url = add_query_arg(
 				array(
