@@ -118,7 +118,8 @@ document.addEventListener(
                                 return result.data.id
                             }
 
-                            errorHandler.message(ppcp_add_payment_method.error_message);
+                            //errorHandler.message(ppcp_add_payment_method.error_message);
+                            errorHandler.message('createVaultSetupToken ' + JSON.stringify(result));
                         },
                         onApprove: async ({vaultSetupToken}) => {
                             const response = await fetch(ppcp_add_payment_method.ajax.create_payment_token.endpoint, {
@@ -167,11 +168,13 @@ document.addEventListener(
                                 return;
                             }
 
-                            errorHandler.message(ppcp_add_payment_method.error_message);
+                            //errorHandler.message(ppcp_add_payment_method.error_message);
+                            errorHandler.message('onApprove ' + JSON.stringify(result));
                         },
                         onError: (error) => {
                             console.error(error)
-                            errorHandler.message(ppcp_add_payment_method.error_message);
+                            //errorHandler.message(ppcp_add_payment_method.error_message);
+                            errorHandler.message('onError ' + JSON.stringify(error));
                         }
                     });
 
